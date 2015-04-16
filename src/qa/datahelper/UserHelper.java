@@ -138,7 +138,7 @@ public  class UserHelper { // UserHelper
 			 System.out.println("IsExistUserNetwork ID: " + id + " is true");
 			 return true;
 		 }
-
+		 System.out.println();
 		 return false;
 		 
 //		 if ( isExistByUserId (id)) {
@@ -195,7 +195,7 @@ public  class UserHelper { // UserHelper
 				 System.out.println("addUser is done");
 				 tx.success();
 			 }
-			 
+			 System.out.println();
 		 } else {
 			 System.out.println("errors: " + userId + "is already in neo4j");
 		 }
@@ -211,14 +211,17 @@ public  class UserHelper { // UserHelper
 	public boolean isExistByUserId(long id) {
 		// TODO Auto-generated method stub
         // START SNIPPET: execute
+		System.out.println("-------isExistByUserId---------");
+		boolean result = false;
 		try( Transaction tx =  db.beginTx()) {			
 			ResourceIterator<Node> iterator1 = db.findNodesByLabelAndProperty(User, "ID", id).iterator();			
 		    while (iterator1.hasNext()) {		    	
-		    	return true;		    	
+		    	result =  true;		    	
 		    }		    
 		    tx.success();		
 		}
-		return false;
+		System.out.println();
+		return result;
 	}
 	
 	/**
@@ -227,14 +230,17 @@ public  class UserHelper { // UserHelper
 	  * @return if there exists token in the database, return true.  Else return false 
 	  */
 	public boolean isExistByIndex(String token) {	
+		System.out.println("-------isExistByIndex---------");
+		boolean result = false;
 		try( Transaction tx =  db.beginTx()) {		
 			ResourceIterator<Node> iterator1 = db.findNodesByLabelAndProperty(Index, "token", token).iterator();			
 		    while (iterator1.hasNext()) {	    
-		    	return true;			
+		    	result = true;			
 		    }		    
 		    tx.success();			
 		}	    
-	    return false;
+		System.out.println();
+	    return result;
 	} 
 	
 	/**
@@ -263,7 +269,7 @@ public  class UserHelper { // UserHelper
 			 
 			 tx.success();
 		 }
-		 
+		 System.out.println();
 		return relation;
 		
 		/*
@@ -313,7 +319,7 @@ public  class UserHelper { // UserHelper
 			 
 			 tx.success();
 		 }
-		 
+		 System.out.println();
 		return relation;
 		
 //		ExecutionEngine engine = new ExecutionEngine(db);
@@ -364,6 +370,7 @@ public  class UserHelper { // UserHelper
 			 tx.success();
 		 }
 		 System.out.println("TF between " + token + " and " + id + " is " + TF);
+		 System.out.println();
 		 return TF;
 		
 		/*
@@ -429,6 +436,7 @@ public  class UserHelper { // UserHelper
 		System.out.println("the collection frequency of this userID: " + userID + " is " + userID_CF);
 		
 		System.out.println("------update CF End ------");
+		System.out.println();
 		return userID_CF;
 		
 	} // end updateCF
@@ -525,6 +533,7 @@ public  class UserHelper { // UserHelper
 		} else { // user id is not in neo4j, should send errors
 			System.out.println("errors user: " + id + " is not in neo4j");
 		}
+		System.out.println();
 		
 	} // end addIndex
   
@@ -590,6 +599,7 @@ public  class UserHelper { // UserHelper
 		} else { 
 			// there is no user with userId
 			System.out.println("errors userId" + userId + " is not in the database");
+			System.out.println();
 		}
 		
 	} // end addFollower
@@ -611,7 +621,9 @@ public  class UserHelper { // UserHelper
 			node=(Node) result.columnAs("a");
 			transction.success();
 		}
+		
 		 return node;	
+		 
 	}
 	
 	/**
