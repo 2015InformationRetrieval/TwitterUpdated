@@ -89,10 +89,57 @@ public  class UserHelper { // UserHelper
 	  * @param id
 	  * @return
 	  */
-	 @SuppressWarnings("deprecation")
-	public boolean IsExistUserNetwork(long id) {
+	 public boolean IsExistUserNetwork(long id) {
 		 
+		 System.out.println("--------check IsExistUserNetwork--------");
 		 Set<String> container = new HashSet<String>();
+		
+		 if ( isExistByUserId(id)) {
+			 
+			 try ( Transaction tx = db.beginTx()) {
+				 
+				 ResourceIterator<Node> iterator_user = db.findNodesByLabelAndProperty(User, "ID", id).iterator();
+				 Node user_node = iterator_user.next();
+				 Iterator<Relationship> rels = user_node.getRelationships(RelTypes.Indexed, Direction.OUTGOING).iterator(); 
+				 
+				 while ( rels.hasNext() ) {
+					 Relationship rel = rels.next();
+					 String name = rel.getType().name();
+					 container.add(name);
+				 }
+				 
+				 tx.success();
+				 
+			 } // end try 
+			 
+			 try ( Transaction tx = db.beginTx()) {
+				 
+				 ResourceIterator<Node> iterator_user = db.findNodesByLabelAndProperty(User, "ID", id).iterator();
+				 Node user_node = iterator_user.next();
+				 Iterator<Relationship> rels = user_node.getRelationships(RelTypes.Followed, Direction.INCOMING).iterator(); 
+				 
+				 while ( rels.hasNext() ) {
+					 Relationship rel = rels.next();
+					 String name = rel.getType().name();
+					 container.add(name);
+				 }
+				 
+				 tx.success();
+				 
+			 } // end try 
+			 
+			 
+			 
+		 } else {
+			 System.out.println("IsExistUserNetwork ID: " + id + " is not in neo4j");
+		 }
+		 
+		 if ( container.contains("Indexed") && container.contains("Followed") ) {
+			 System.out.println("IsExistUserNetwork ID: " + id + " is true");
+			 return true;
+		 }
+
+		 return false;
 		 
 //		 if ( isExistByUserId (id)) {
 //			try ( Transaction rx = db.beginTx() ) {
@@ -108,22 +155,7 @@ public  class UserHelper { // UserHelper
 //		 } else {
 //			 System.out.println("userID: " + id + " is not in neo4j. Thus no exsiting network");
 //		 }
-		 if ( isExistByUserId(id)) {
-			 
-			 try ( Transaction tx = db.beginTx()) {
-
-					 Iterable<RelationshipType> itea_type = db.getRelationshipTypes();
-					 Iterator<RelationshipType> itea = itea_type.iterator();
-					 while( itea.hasNext()) {
-						 String name = itea.next().name();
-						 container.add(name);
-					 }
-					 tx.success();
-			 } // end try 
-			 
-		 } else {
-			 System.out.println("user id: " + id + " is not in neo4j");
-		 }
+		 
 		 
 //		 //Set<RelationshipType> contain = new HashSet<RelationshipType>();
 //		 try ( Transaction tx = db.beginTx()) {
@@ -139,12 +171,7 @@ public  class UserHelper { // UserHelper
 //	
 //			 }
 //		 } // end try
-		 
-		 if ( container.contains("Indexed") && container.contains("Followed") ) {
-			 return true;
-		 }
 
-		 return false;
 	 }
 	 
 	 /**
@@ -217,7 +244,29 @@ public  class UserHelper { // UserHelper
 	 * @return
 	 */
 	public boolean checkRelationShipToken(String token, long id) {
-
+		
+		 Boolean relation = false;
+		 
+		 try ( Transaction tx = db.beginTx() ) {
+			 
+			 ResourceIterator<Node> iterator_user = db.findNodesByLabelAndProperty(User, "ID", id).iterator();
+			 Node user_node = iterator_user.next();
+			 Iterator<Relationship> rels = user_node.getRelationships(RelTypes.Indexed, Direction.OUTGOING).iterator();
+			 
+			 while ( rels.hasNext() ) {
+				 Relationship rel = rels.next();
+				 Node index_node = rel.getOtherNode(user_node);
+				 if ( index_node.getProperty("token").equals(token)) {
+					 relation = true;
+				 }
+			 }
+			 
+			 tx.success();
+		 }
+		 
+		return relation;
+		
+		/*
 		ExecutionEngine engine = new ExecutionEngine(db);
 		ExecutionResult result; 
 		
@@ -233,6 +282,7 @@ public  class UserHelper { // UserHelper
 			}
 
 		} // end try
+		*/
 		
 		
 	} // end checkRelationShipToken
@@ -263,7 +313,9 @@ public  class UserHelper { // UserHelper
 			 
 			 tx.success();
 		 }
+		 
 		return relation;
+		
 //		ExecutionEngine engine = new ExecutionEngine(db);
 //		ExecutionResult result; 
 //		
@@ -292,7 +344,7 @@ public  class UserHelper { // UserHelper
 	 * @return
 	 */
 	public int getTF(String token, long id) {
-		
+		 System.out.println("--------getTF-------");
 		 int TF = 0;
 		 
 		 try ( Transaction tx = db.beginTx() ) {
@@ -311,7 +363,7 @@ public  class UserHelper { // UserHelper
 			 
 			 tx.success();
 		 }
-		 
+		 System.out.println("TF between " + token + " and " + id + " is " + TF);
 		 return TF;
 		
 		/*
@@ -365,8 +417,8 @@ public  class UserHelper { // UserHelper
 					 userID_CF = userID_CF + DF;
 					 
 				 } // end while
-				 
-				 user_node.setProperty("CF",userID_CF);
+				 userID_CF = userID_CF + CF;
+				 user_node.setProperty("CF", userID_CF);
 				 tx.success();
 			 } // end try
 		
@@ -388,7 +440,7 @@ public  class UserHelper { // UserHelper
  	  * @param id: the twitter_id of the user
 	  */
 	public void addIndex(String token, long id) {
-
+		System.out.println("----------addIndex----------");
 		if (isExistByUserId(id)) { // user id is in neo4j
 			
 			if (isExistByIndex(token)) { // token is already in neo4j
@@ -414,7 +466,8 @@ public  class UserHelper { // UserHelper
 								 rel.setProperty("TF", getTF(token,id) + 1);
 							 }
 						 }
-						 System.out.println("the new DF of ID: " + id + " is " + getTF(token, id));
+						 
+						 System.out.println("the TF of " + token + " and " + id + " is " + getTF(token, id));
 						 tx.success();
 						 
 					 }
@@ -484,7 +537,7 @@ public  class UserHelper { // UserHelper
 	  */
 	public void addFollower(long userId, long followerId, String name) {
 		// TODO Auto-generated method stub
-		
+		System.out.println("---------addFollower----------");
 		if (isExistByUserId(userId)) { // check userId is in neo4j or not
 
 			if ( isExistByUserId(followerId)) { // followedId is in neo4j, we only need to find this follower
